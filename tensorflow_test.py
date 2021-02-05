@@ -11,7 +11,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
 
-data_dir = Path('/home/juan/Downloads/images/resized/')
+data_dir = Path('/home/juan/Downloads/img_new')
 image_count = len(list(data_dir.glob('*.jpg')))
 
 
@@ -28,6 +28,16 @@ train_ds = tf.keras.preprocessing.image_dataset_from_directory(
   seed=123,
   image_size=(img_height, img_width),
   batch_size=batch_size)
+
+val_ds = tf.keras.preprocessing.image_dataset_from_directory(
+  data_dir,
+  validation_split=0.2,
+  subset="validation",
+  seed=123,
+  image_size=(img_height, img_width),
+  batch_size=batch_size)
+
+class_names = train_ds.class_names
 
 """
 for image in images:
