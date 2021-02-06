@@ -2,18 +2,32 @@ import csv
 import geopy.distance as di
 import location
 import sighting_radius as sr
+import matplotlib.pyplot as plt
+import cartopy as cpy
+import cartopy.crs as ccrs
 
 data = []
 positive_data = []
 sightings = []
 
 
+def plot_map():
+    # bounds for the state of washington
+    BOUNDS = [-124.849, -116.9156, 45.5435, 49.0024]
+    fig = plt.figure(figsize=(8, 8))
+    ax = plt.axes(projection=ccrs.Mercator())
+    ax.set_extent(BOUNDS)
+    ax.set_title("Washington")
+    ax.add_feature(cpy.feature.STATES)
+    gl = ax.gridlines(linestyle=":", draw_labels=True)
+    plt.show()
+
+
+
 def locate_nests():
     for datapt in positive_data:
         sightings.append(sr.SightingRadius(datapt.get_loc(), 8, 1))
 
-    # for sighting in sightings:
-     #   for sighting2 in sightings:
 
 def check_near_sightings(loc_x, loc_y):
     # The radius of each sighting.
@@ -43,6 +57,8 @@ with open('/home/juan/Documents/MCM/Locationdata.csv') as csv_file:
 for point in data:
     if point.get_status() == "Positive ID":
         positive_data.append(point)
+
+plot_map()
 
 for point in positive_data:
     print(point.to_string())
