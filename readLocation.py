@@ -1,10 +1,19 @@
 import csv
 import geopy.distance as di
 import location
+import sighting_radius as sr
 
 data = []
 positive_data = []
+sightings = []
 
+
+def locate_nests():
+    for datapt in positive_data:
+        sightings.append(sr.SightingRadius(datapt.get_loc(), 8, 1))
+
+    # for sighting in sightings:
+     #   for sighting2 in sightings:
 
 def check_near_sightings(loc_x, loc_y):
     # The radius of each sighting.
