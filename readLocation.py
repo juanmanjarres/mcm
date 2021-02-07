@@ -18,21 +18,18 @@ unverified_data = []
 sightings = []
 
 
-
 def plot_map():
     # bounds for Washington and South BC
     BOUNDS = [-127.063, -114.034, 45.556, 50.760]
-    fig = plt.figure(figsize=(4, 4))
+    fig = plt.figure(figsize=(8, 8))
     ax = plt.axes(projection=ccrs.Mercator())
     ax.set_extent(BOUNDS)
 
     #ax.stock_img()
 
-
     ax.add_feature(cpy.feature.LAND)
     ax.add_feature(cpy.feature.COASTLINE)
     ax.add_feature(cpy.feature.OCEAN)
-
 
     ax.set_title("Washington/South BC")
     ax.add_feature(cpy.feature.STATES)
@@ -57,6 +54,7 @@ def check_coord(given_pos_data, given_data_check):
 
     tree = KDTree(locations, distance_metric='Arc', radius=libpysal.cg.RADIUS_EARTH_KM)
 
+    # TODO change the positive data to its own method?
     for datapt in given_pos_data:
         current_point = (datapt.get_loc())
 
@@ -70,6 +68,13 @@ def check_coord(given_pos_data, given_data_check):
     for datapt in given_data_check:
         current_point = (datapt.get_loc())
         indices = tree.query_ball_point(current_point, radius)
+        if len(indices) == 0:
+            priority[current_point] = 0
+
+        for i in indices:
+            loc = locations[i]
+            # Assuming the locations are not repeated
+            priority[current_point] = priority[loc]
 
     return priority
 
@@ -117,7 +122,7 @@ priority_coord_unver = check_coord(positive_data, unverified_data)
 for i in priority_coord_unver:
     print(i, priority_coord_unver[i])
 
-#plot_map()
+plot_map()
 
 for point in positive_data:
     print(point.to_string())
