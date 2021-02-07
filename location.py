@@ -1,7 +1,7 @@
 class Location:
     def __init__(self, globalID, date, status, xloc, yloc):
-        self.xloc = xloc
-        self.yloc = yloc
+        self.xloc = float(xloc)
+        self.yloc = float(yloc)
         self.globalID = globalID
         self.status = status
         self.date = date
@@ -20,4 +20,4 @@ class Location:
 
     def to_string(self):
         return self.globalID + " " + self.date + " " \
-               + self.status + " " + self.xloc + " " + self.yloc
+               + self.status + " " + str(self.xloc) + " " + str(self.yloc)

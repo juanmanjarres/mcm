@@ -3,30 +3,75 @@ import geopy.distance as di
 import location
 import sighting_radius as sr
 import matplotlib.pyplot as plt
+import copy
+
+import libpysal
+from libpysal.cg.kdtree import KDTree
+
 import cartopy as cpy
 import cartopy.crs as ccrs
 
+
 data = []
 positive_data = []
+unverified_data = []
 sightings = []
 
 
+
 def plot_map():
-    # bounds for the state of washington
-    BOUNDS = [-124.849, -116.9156, 45.5435, 49.0024]
-    fig = plt.figure(figsize=(8, 8))
+    # bounds for Washington and South BC
+    BOUNDS = [-127.063, -114.034, 45.556, 50.760]
+    fig = plt.figure(figsize=(4, 4))
     ax = plt.axes(projection=ccrs.Mercator())
     ax.set_extent(BOUNDS)
-    ax.set_title("Washington")
+
+    #ax.stock_img()
+
+
+    ax.add_feature(cpy.feature.LAND)
+    ax.add_feature(cpy.feature.COASTLINE)
+    ax.add_feature(cpy.feature.OCEAN)
+
+
+    ax.set_title("Washington/South BC")
     ax.add_feature(cpy.feature.STATES)
     gl = ax.gridlines(linestyle=":", draw_labels=True)
     plt.show()
 
 
+def check_coord(given_pos_data, given_data_check):
+    """
 
-def locate_nests():
-    for datapt in positive_data:
-        sightings.append(sr.SightingRadius(datapt.get_loc(), 8, 1))
+    :param given_pos_data: An array containing Location objects with the positive confirmed cases
+    :param given_data_check: An array containing Location objects to be checked against positive data
+    :return:a dictionary with the keys being a tuple with the location, and the values being the priority value for
+            the location
+    """
+    radius = 8   # radius from the hornets' max range
+    priority = {}
+    locations = []
+    for datapt in given_pos_data:
+        locations.append(datapt.get_loc())
+        priority[datapt.get_loc()] = 1
+
+    tree = KDTree(locations, distance_metric='Arc', radius=libpysal.cg.RADIUS_EARTH_KM)
+
+    for datapt in given_pos_data:
+        current_point = (datapt.get_loc())
+
+        # get all points within 8km radius
+        indices = tree.query_ball_point(current_point, radius)
+        for i in indices:
+            loc = locations[i]
+            if loc in priority:
+                priority[loc] += 1
+
+    for datapt in given_data_check:
+        current_point = (datapt.get_loc())
+        indices = tree.query_ball_point(current_point, radius)
+
+    return priority
 
 
 def check_near_sightings(loc_x, loc_y):
@@ -58,7 +103,21 @@ for point in data:
     if point.get_status() == "Positive ID":
         positive_data.append(point)
 
-plot_map()
+for point in data:
+    if point.get_status() == "Unverified":
+        unverified_data.append(point)
+
+priority_coord = check_coord(positive_data, positive_data)
+
+for i in priority_coord:
+    print(i, priority_coord[i])
+
+priority_coord_unver = check_coord(positive_data, unverified_data)
+
+for i in priority_coord_unver:
+    print(i, priority_coord_unver[i])
+
+#plot_map()
 
 for point in positive_data:
     print(point.to_string())
