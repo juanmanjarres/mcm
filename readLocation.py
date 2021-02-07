@@ -3,7 +3,7 @@ import geopy.distance as di
 import location
 import sighting_radius as sr
 import matplotlib.pyplot as plt
-import copy
+import numpy as np
 
 import libpysal
 from libpysal.cg.kdtree import KDTree
@@ -18,14 +18,13 @@ unverified_data = []
 sightings = []
 
 
-def plot_map():
+def plot_map(priority):
     # bounds for Washington and South BC
     BOUNDS = [-127.063, -114.034, 45.556, 50.760]
     fig = plt.figure(figsize=(8, 8))
     ax = plt.axes(projection=ccrs.Mercator())
-    ax.set_extent(BOUNDS)
 
-    #ax.stock_img()
+    ax.set_extent(BOUNDS)
 
     ax.add_feature(cpy.feature.LAND)
     ax.add_feature(cpy.feature.COASTLINE)
@@ -34,6 +33,36 @@ def plot_map():
     ax.set_title("Washington/South BC")
     ax.add_feature(cpy.feature.STATES)
     gl = ax.gridlines(linestyle=":", draw_labels=True)
+
+    ax.add_patch(plt.Circle((48.980994, -122.688503), 3, color='r'))
+
+    x = [key[0] for key in priority.keys()]
+    print(x)
+    y = [key[1] for key in priority.keys()]
+    print(y)
+    values = [priority[key] for key in priority]
+
+    array = np.zeros(shape=(len(x), len(y)))
+    for i in range(0, len(x)):
+        for j in range(0, len(y)):
+            try:
+                array[i, j] = priority[(x[i], y[j])]
+            except KeyError:
+                pass
+
+
+    print(x, y, array)
+    ax.contourf(array, transform=ccrs.Mercator())
+    #plt.scatter(x, y, values, transform=ccrs.Mercator())
+    #plt.colorbar()
+    # This doesn't work since it needs a numpy array
+    # plt.imshow(priority, cmap='hot', interpolation='nearest')
+    """
+    for pt in priority:
+        print(pt)
+        ax.add_patch(plt.Circle(xy=pt, radius=1000, color='red', alpha=0.3, transform=ccrs.Mercator(), zorder=30))
+        # plt.plot(pt[0], pt[1], 'bo', transform=ccrs.Mercator())
+    """
     plt.show()
 
 
@@ -114,24 +143,16 @@ for point in data:
 
 priority_coord = check_coord(positive_data, positive_data)
 
-for i in priority_coord:
-    print(i, priority_coord[i])
-
 priority_coord_unver = check_coord(positive_data, unverified_data)
 
-for i in priority_coord_unver:
-    print(i, priority_coord_unver[i])
 
-plot_map()
-
-for point in positive_data:
-    print(point.to_string())
+plot_map(priority_coord)
 
 # Variables for the user location given
-location_x = input("Enter the latitude of the location: ")
-location_y = input("Enter the longitude of the location: ")
+# location_x = input("Enter the latitude of the location: ")
+# location_y = input("Enter the longitude of the location: ")
 
-check_near_sightings(location_x, location_y)
+# check_near_sightings(location_x, location_y)
 
 
 
