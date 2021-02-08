@@ -166,7 +166,7 @@ desired_date = input("Input a year for the model: ")
 
 
 for point in data:
-    if point.get_status() == "Positive ID" and point.get_date()
+    if point.get_status() == "Positive ID":
         positive_data.append(point)
 
 for point in data:
