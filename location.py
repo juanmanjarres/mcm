@@ -1,3 +1,6 @@
+import datetime
+
+
 class Location:
     def __init__(self, globalID, date, status, xloc, yloc):
         self.xloc = float(xloc)
@@ -16,6 +19,7 @@ class Location:
         return self.status
 
     def get_date(self):
+
         return self.date
 
     def to_string(self):

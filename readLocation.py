@@ -4,6 +4,7 @@ import location
 import sighting_radius as sr
 import matplotlib.pyplot as plt
 import numpy as np
+import datetime
 
 import libpysal
 from libpysal.cg.kdtree import KDTree
@@ -17,14 +18,28 @@ positive_data = []
 unverified_data = []
 sightings = []
 
+def dummy():
+    lon = np.linspace(-80, 80, 25)
+    lat = np.linspace(30, 70, 25)
+    lon2d, lat2d = np.meshgrid(lon, lat)
+
+    data = np.cos(np.deg2rad(lat2d) * 4) + np.sin(np.deg2rad(lon2d) * 4)
+    plt.figure(figsize=(6, 3))
+    ax = plt.axes(projection=ccrs.PlateCarree())
+    ax.set_global()
+    ax.coastlines()
+    ax.contourf(lon, lat, data)  # didn't use transform, but looks ok...
+    plt.show()
+
+
 
 def plot_map(priority):
     # bounds for Washington and South BC
     BOUNDS = [-127.063, -114.034, 45.556, 50.760]
     fig = plt.figure(figsize=(8, 8))
-    ax = plt.axes(projection=ccrs.Mercator())
+    ax = plt.axes(projection=ccrs.PlateCarree())
 
-    ax.set_extent(BOUNDS)
+    ax.set_extent(BOUNDS, crs=ccrs.PlateCarree())
 
     ax.add_feature(cpy.feature.LAND)
     ax.add_feature(cpy.feature.COASTLINE)
@@ -32,43 +47,57 @@ def plot_map(priority):
 
     ax.set_title("Washington/South BC")
     ax.add_feature(cpy.feature.STATES)
-    gl = ax.gridlines(linestyle=":", draw_labels=True)
+    gl = ax.gridlines(crs=ccrs.PlateCarree(), linestyle=":", draw_labels=True)
 
-    ax.add_patch(plt.Circle((48.980994, -122.688503), 3, color='r'))
+    lon = np.linspace(-127.063, -114.034, 50)
+    lat = np.linspace(45.556, 50.760, 50)
+
+    lon2d, lat2d = np.meshgrid(lon, lat)
 
     x = [key[0] for key in priority.keys()]
-    print(x)
     y = [key[1] for key in priority.keys()]
-    print(y)
     values = [priority[key] for key in priority]
 
+    array = np.zeros(shape=(len(lon)+1, len(lat)+1))
+
+    counter_lon = 0
+    counter_lat = 0
+    for i in lon:
+        for j in lat:
+            try:
+                array[counter_lon, counter_lat] = priority[(i, j)]
+            except KeyError:
+                # TODO if it's on an 8km radius, copy the highest value
+    #            array[counter_lon, counter_lat] = return_highest_sighting(j, i, priority)
+                pass
+            counter_lat += 1
+        counter_lon += 1
+
+    ax.contourf(lon, lat, array)
+    plt.scatter(y, x, values, c='blue', transform=ccrs.PlateCarree())
+    plt.show()
+
+    """
     array = np.zeros(shape=(len(x), len(y)))
     for i in range(0, len(x)):
         for j in range(0, len(y)):
             try:
                 array[i, j] = priority[(x[i], y[j])]
             except KeyError:
+                # TODO if it's on an 8km radius, copy the highest value
                 pass
-
-
-    print(x, y, array)
-    ax.contourf(array, transform=ccrs.Mercator())
-    #plt.scatter(x, y, values, transform=ccrs.Mercator())
-    #plt.colorbar()
-    # This doesn't work since it needs a numpy array
-    # plt.imshow(priority, cmap='hot', interpolation='nearest')
-    """
+                
     for pt in priority:
         print(pt)
         ax.add_patch(plt.Circle(xy=pt, radius=1000, color='red', alpha=0.3, transform=ccrs.Mercator(), zorder=30))
         # plt.plot(pt[0], pt[1], 'bo', transform=ccrs.Mercator())
     """
-    plt.show()
 
 
-def check_coord(given_pos_data, given_data_check):
+
+def create_priority_dict(given_pos_data, given_data_check):
     """
-
+    Creates a dictionary with the priority for each location in the dictionary based on the given data
     :param given_pos_data: An array containing Location objects with the positive confirmed cases
     :param given_data_check: An array containing Location objects to be checked against positive data
     :return:a dictionary with the keys being a tuple with the location, and the values being the priority value for
@@ -108,21 +137,21 @@ def check_coord(given_pos_data, given_data_check):
     return priority
 
 
-def check_near_sightings(loc_x, loc_y):
+def return_highest_sighting(loc_x, loc_y, dict):
     # The radius of each sighting.
     # Because the workers often travel at most 8km, we estimate the max distance here
     radius = 8
     loc = loc_x, loc_y
-    close = False
-    for datapt in positive_data:
-        dist = di.distance(datapt.get_loc(), loc).km
+    priority = 0
+    for key in dict:
+        print(key)
+        print(loc)
+        dist = di.distance(key, loc).km
         if(dist < radius) and (dist > (-radius)):
-            close = True
+            if priority < dict[key]:
+                priority = dict[key]
 
-    if close:
-        print("The sighting is nearby a confirmed case")
-    else:
-        print("The sighting is not near a confirmed case")
+    return priority
 
 
 with open('/home/juan/Documents/MCM/Locationdata.csv') as csv_file:
@@ -133,21 +162,25 @@ with open('/home/juan/Documents/MCM/Locationdata.csv') as csv_file:
             data.append(location.Location(row[0], row[1], row[2], row[3], row[4]))
         line_count += 1
 
+desired_date = input("Input a year for the model: ")
+
+
 for point in data:
-    if point.get_status() == "Positive ID":
+    if point.get_status() == "Positive ID" and point.get_date()
         positive_data.append(point)
 
 for point in data:
     if point.get_status() == "Unverified":
         unverified_data.append(point)
 
-priority_coord = check_coord(positive_data, positive_data)
+dict_positive = create_priority_dict(positive_data, positive_data)
 
-priority_coord_unver = check_coord(positive_data, unverified_data)
+dict_unver = create_priority_dict(positive_data, unverified_data)
 
 
-plot_map(priority_coord)
+plot_map(dict_positive)
 
+#dummy()
 # Variables for the user location given
 # location_x = input("Enter the latitude of the location: ")
 # location_y = input("Enter the longitude of the location: ")
